@@ -2,6 +2,8 @@ package rayka.chat.app.service;
 
 import rayka.chat.app.model.Usuario;
 
+import java.io.IOException;
+
 public interface UDPService {
 
     /**
@@ -10,7 +12,7 @@ public interface UDPService {
      * @param destinatario
      * @param chatGeral
      */
-    void enviarMensagem(String mensagem, Usuario destinatario, boolean chatGeral);
+    void enviarMensagem(String mensagem, Usuario destinatario, boolean chatGeral) throws IOException;
 
     /**
      * Notifica que o próprio usuário foi alterado

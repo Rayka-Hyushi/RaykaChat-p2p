@@ -1,8 +1,12 @@
 package rayka.chat.app.swing;
 
+import lombok.Getter;
+import lombok.SneakyThrows;
 import rayka.chat.app.model.Usuario;
 import rayka.chat.app.service.UDPService;
 import rayka.chat.app.service.UDPServiceImpl;
+import rayka.chat.app.service.UDPServiceMensagemListener;
+import rayka.chat.app.service.UDPServiceUsuarioListener;
 
 import javax.swing.*;
 import java.awt.*;
@@ -152,6 +156,7 @@ public class ChatClientSwing extends JFrame {
             campoEntrada = new JTextField();
             this.chatGeral = chatGeral;
             campoEntrada.addActionListener(new ActionListener() {
+                @SneakyThrows
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     ((JTextField) e.getSource()).setText("");

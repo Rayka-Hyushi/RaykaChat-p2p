@@ -11,7 +11,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Mensagem {
 
-    public Enum TipoMensagem {sonda, msg_individual, fim_chat, msg_grupo};
+    public enum TipoMensagem {sonda, msg_individual, fim_chat, msg_grupo};
 
     private TipoMensagem tipo;
+    private String usuario;
+    private String status;
+    private String texto;
 }
