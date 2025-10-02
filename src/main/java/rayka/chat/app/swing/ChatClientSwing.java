@@ -172,41 +172,95 @@ public class ChatClientSwing extends JFrame {
 
     private class UsuarioListener implements UDPServiceUsuarioListener {
         @Override
-        public void usuarioAdicionado(Usuario usuario) {
-            dfListModel.removeElement(usuario);
-            dfListModel.addElement(usuario);
+        public void usuarioAdicionado(final Usuario usuario) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    if (!dfListModel.contains(usuario)) {
+                        dfListModel.addElement(usuario);
+                    }
+                }
+            });
         }
-
+        
         @Override
-        public void usuarioRemovido(Usuario usuario) {
-            dfListModel.removeElement(usuario);
+        public void usuarioRemovido(final Usuario usuario) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    dfListModel.removeElement(usuario); // Remove o usuário da lista de online
+                    
+                    if (chatsAbertos.contains(usuario)) {
+                        for (int i = 1; i < tabbedPane.getTabCount(); i++) { // Itera nas abas para encontrar e fechar a aba do usuário removido
+                            Component component = tabbedPane.getComponentAt(i); // (Começa em 1 para ignorar a aba "Geral")
+                            if (component instanceof PainelChatPVT) {
+                                PainelChatPVT p = (PainelChatPVT) component;
+                                
+                                if (p.getUsuario().equals(usuario)) { // Verifica se o usuário do painel é o usuário removido
+                                    tabbedPane.remove(i);
+                                    chatsAbertos.remove(usuario);
+                                    break; // Sai do loop após a remoção
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
-
+        
         @Override
-        public void usuarioAlterado(Usuario usuario) {
-            dfListModel.removeElement(usuario);
-            dfListModel.addElement(usuario);
+        public void usuarioAlterado(final Usuario usuario) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    int index = dfListModel.indexOf(usuario);
+                    
+                    if (index >= 0) {
+                        dfListModel.remove(index); // Remove o objeto antigo
+                        dfListModel.add(index, usuario); // Adiciona o novo objeto
+                    } else {
+                        dfListModel.addElement(usuario); // Se não foi encontrado, adicione-o no final (como se fosse um novo usuário)
+                    }
+                }
+            });
         }
     }
 
     private class MensagemListener implements UDPServiceMensagemListener {
         @Override
         public void mensagemRecebida(String mensagem, Usuario remetente, boolean chatGeral) {
-            PainelChatPVT painel = null;
-            if (chatGeral) {
-                painel = (PainelChatPVT) tabbedPane.getComponentAt(0);
-            } else {
-                for (int i = 1; i < tabbedPane.getTabCount(); i++) {
-                    PainelChatPVT p = (PainelChatPVT) tabbedPane.getComponentAt(i);
-                    if (p.getUsuario().equals(remetente)) {
-                        painel = p;
-                        break;
+            SwingUtilities.invokeLater(new Runnable() { // Garante que a manipulação da UI ocorra na Event Dispatch Thread
+                @Override
+                public void run() {
+                    PainelChatPVT painel = null;
+                    int tabIndex = -1;
+                    
+                    if (chatGeral) {
+                        painel = (PainelChatPVT) tabbedPane.getComponentAt(0);
+                        tabIndex = 0;
+                    } else {
+                        for (int i = 1; i < tabbedPane.getTabCount(); i++) { // Tenta encontrar o chat aberto
+                            PainelChatPVT p = (PainelChatPVT) tabbedPane.getComponentAt(i);
+                            if (p.getUsuario().equals(remetente)) {
+                                painel = p;
+                                tabIndex = i; // Armazena o índice do chat encontrado
+                                break;
+                            }
+                        }
+                        
+                        if (painel == null) { // Se o chat não estiver aberto, abre automaticamente
+                            if (chatsAbertos.add(remetente)) {
+                                painel = new PainelChatPVT(remetente, false);
+                                tabbedPane.add(remetente.toString(), painel);
+                                tabIndex = tabbedPane.getTabCount() - 1; // O índice será o último adicionado
+                            }
+                        }
+                    }
+                    if (painel != null) { // Se um painel válido for processado:
+                        painel.getAreaChat().append(remetente.getNome() + "> " + mensagem + "\n"); // Anexa a mensagem
                     }
                 }
-            }
-            if (painel != null) {
-                painel.getAreaChat().append(remetente.getNome() + "> " + mensagem + "\n");
-            }
+            });
         }
     }
 }
