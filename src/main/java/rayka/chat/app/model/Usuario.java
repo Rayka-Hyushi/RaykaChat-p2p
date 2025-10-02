@@ -10,11 +10,9 @@ import java.net.InetAddress;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Usuario {
-
     private String nome;
     private StatusUsuario status;
     private InetAddress endereco;
-
 
     @Override
     public boolean equals(Object o) {
@@ -36,5 +34,4 @@ public class Usuario {
     public enum StatusUsuario {
         DISPONIVEL, NAO_PERTURBE, VOLTO_LOGO
     }
-
 }

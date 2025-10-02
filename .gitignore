@@ -8,9 +8,12 @@ target/
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.idea/artifacts/*
 *.iws
 *.iml
 *.ipr
+META-INF/MANIFEST.MF
+out/*
 
 ### Eclipse ###
 .apt_generated

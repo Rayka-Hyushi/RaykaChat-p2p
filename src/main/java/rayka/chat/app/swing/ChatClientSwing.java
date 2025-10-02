@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import rayka.chat.app.model.Usuario;
 import rayka.chat.app.service.UDPService;
-import rayka.chat.app.service.UDPServiceImpl;
 import rayka.chat.app.service.UDPServiceMensagemListener;
 import rayka.chat.app.service.UDPServiceUsuarioListener;
 
@@ -20,23 +19,21 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * 
  * User: Rafael
  * Date: 13/10/14
  * Time: 10:28
- * 
  */
 public class ChatClientSwing extends JFrame {
-
     private Usuario meuUsuario;
     private JList listaChat;
     private DefaultListModel<Usuario> dfListModel;
     private JTabbedPane tabbedPane = new JTabbedPane();
     private Set<Usuario> chatsAbertos = new HashSet<>();
-    private UDPService udpService = new UDPServiceImpl();
+    private UDPService udpService;
     private Usuario USER_GERAL = new Usuario("Geral", null, null);
 
-    public ChatClientSwing() throws UnknownHostException {
+    public ChatClientSwing(UDPService service) throws UnknownHostException {
+        this.udpService = service;
         setLayout(new GridBagLayout());
         JMenuBar menuBar = new JMenuBar();
         JMenu menu = new JMenu("Status");
@@ -84,19 +81,23 @@ public class ChatClientSwing extends JFrame {
             public void mousePressed(MouseEvent e) {
                 super.mousePressed(e);
                 if (e.getButton() == MouseEvent.BUTTON3) {
-                    JPopupMenu popupMenu =  new JPopupMenu();
+                    JPopupMenu popupMenu = new JPopupMenu();
                     final int tab = tabbedPane.getUI().tabForCoordinate(tabbedPane, e.getX(), e.getY());
-                    JMenuItem item = new JMenuItem("Fechar");
-                    item.addActionListener(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            PainelChatPVT painel = (PainelChatPVT) tabbedPane.getTabComponentAt(tab);
-                            tabbedPane.remove(tab);
-                            chatsAbertos.remove(painel.getUsuario());
-                        }
-                    });
-                    popupMenu.add(item);
-                    popupMenu.show(e.getComponent(), e.getX(), e.getY());
+                    if (tab > 0 && tab < tabbedPane.getTabCount()) {
+                        JMenuItem item = new JMenuItem("Fechar");
+                        item.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                PainelChatPVT painel = (PainelChatPVT) tabbedPane.getComponentAt(tab);
+                                if (painel != null) {
+                                    tabbedPane.remove(tab);
+                                    chatsAbertos.remove(painel.getUsuario());
+                                }
+                            }
+                        });
+                        popupMenu.add(item);
+                        popupMenu.show(e.getComponent(), e.getX(), e.getY());
+                    }
                 }
             }
         });
@@ -139,10 +140,8 @@ public class ChatClientSwing extends JFrame {
         return listaChat;
     }
 
-
     @Getter
     class PainelChatPVT extends JPanel {
-
         JTextArea areaChat;
         JTextField campoEntrada;
         Usuario usuario;
@@ -172,7 +171,6 @@ public class ChatClientSwing extends JFrame {
     }
 
     private class UsuarioListener implements UDPServiceUsuarioListener {
-
         @Override
         public void usuarioAdicionado(Usuario usuario) {
             dfListModel.removeElement(usuario);
@@ -192,7 +190,6 @@ public class ChatClientSwing extends JFrame {
     }
 
     private class MensagemListener implements UDPServiceMensagemListener {
-
         @Override
         public void mensagemRecebida(String mensagem, Usuario remetente, boolean chatGeral) {
             PainelChatPVT painel = null;
@@ -212,9 +209,4 @@ public class ChatClientSwing extends JFrame {
             }
         }
     }
-
-
-
-
-
 }

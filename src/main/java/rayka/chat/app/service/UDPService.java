@@ -8,6 +8,7 @@ public interface UDPService {
 
     /**
      * Envia uma mensagem para um destinatário
+     *
      * @param mensagem
      * @param destinatario
      * @param chatGeral
@@ -16,21 +17,22 @@ public interface UDPService {
 
     /**
      * Notifica que o próprio usuário foi alterado
+     *
      * @param usuario
      */
     void usuarioAlterado(Usuario usuario);
 
     /**
      * Adiciona um listener para indicar o recebimento de mensagens
+     *
      * @param listener
      */
     void addListenerMensagem(UDPServiceMensagemListener listener);
 
     /**
      * Adiciona um listener para indicar recebimento e/ou alterações em usuários
+     *
      * @param listener
      */
     void addListenerUsuario(UDPServiceUsuarioListener listener);
-
-
 }
