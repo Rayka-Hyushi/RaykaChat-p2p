@@ -13,10 +13,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.net.InetAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
@@ -266,29 +263,56 @@ public class ChatClientSwing extends JFrame {
      */
     private void exibirPopupNotificacao(String titulo, String mensagem) {
         SwingUtilities.invokeLater(() -> {
-            // 1. Cria a Janela (JWindow)
+            // 1. Carrega o ícone para adicionar a notificação
+            Image image = null;
+            try {
+                URL url = getClass().getResource("/icon.png");
+                if (url != null) {
+                    image = Toolkit.getDefaultToolkit().getImage(url).getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+                }
+            } catch (Exception e) {
+                System.err.println("Erro ao carregar recurso do ícone: " + e.getMessage());
+            }
+            // 2. Cria a Janela (JWindow)
             JWindow popup = new JWindow(this);
             popup.setAlwaysOnTop(true);
 
-            // 2. Configura o Painel da Janela
-            JPanel painel = new JPanel(new BorderLayout(5, 5));
-            painel.setBackground(new Color(240, 240, 240));
-            painel.setBorder(BorderFactory.createCompoundBorder(
+            // 3. Painel de conteúdo principal (Para o ícone e o texto)
+            JPanel contentPanel = new JPanel(new BorderLayout(10, 0)); // 10px de espaço entre ícone e texto
+            contentPanel.setBackground(new Color(240, 240, 240));
+
+            // 4. Painel de texto (Título e Mensagem na vertical)
+            JPanel textPanel = new JPanel(new GridLayout(2, 1)); // 2 linhas, 1 coluna
+            textPanel.setBackground(new Color(240, 240, 240));
+
+            JLabel lblTitulo = new JLabel(titulo);
+            lblTitulo.setFont(lblTitulo.getFont().deriveFont(Font.BOLD, 13f));
+
+            JLabel lblMensagem = new JLabel(mensagem);
+
+            textPanel.add(lblTitulo);
+            textPanel.add(lblMensagem);
+
+            // 5. Montagem da notificação
+
+            // Adiciona o ícone se ele foi carregado
+            if (image != null) {
+                JLabel lblIcon = new JLabel(new ImageIcon(image));
+                contentPanel.add(lblIcon, BorderLayout.WEST);
+            }
+
+            contentPanel.add(textPanel, BorderLayout.CENTER); // Adiciona o painel de texto
+
+            // Adiciona borda e estilo ao painel principal
+            contentPanel.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(Color.DARK_GRAY),
                     BorderFactory.createEmptyBorder(10, 10, 10, 10)
             ));
 
-            JLabel lblTitulo = new JLabel(titulo);
-            lblTitulo.setFont(lblTitulo.getFont().deriveFont(Font.BOLD, 14f));
-
-            JLabel lblMensagem = new JLabel(mensagem);
-
-            painel.add(lblTitulo, BorderLayout.NORTH);
-            painel.add(lblMensagem, BorderLayout.CENTER);
-            popup.add(painel);
+            popup.add(contentPanel);
             popup.pack();
 
-            // 3. Define a Posição (Canto Inferior Direito)
+            // 6. Define a Posição (Canto Inferior Direito)
             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
             Rectangle screenRect = ge.getMaximumWindowBounds();
 
@@ -296,11 +320,9 @@ public class ChatClientSwing extends JFrame {
             int y = screenRect.height - popup.getHeight() - 10;
 
             popup.setLocation(x, y);
-
-            // 4. Torna a janela visível
             popup.setVisible(true);
 
-            // 5. Configura um Timer para fechar a janela após 4 segundos
+            // 7. Configura um Timer para fechar a janela após 4 segundos
             Timer timer = new Timer(4000, new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
