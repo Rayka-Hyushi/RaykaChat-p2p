@@ -259,6 +259,59 @@ public class ChatClientSwing extends JFrame {
         }
     }
 
+    /**
+     * Exibe um popup de notificação customizado no canto da tela (solução 100% Swing).
+     * @param titulo O título da notificação.
+     * @param mensagem O conteúdo da notificação.
+     */
+    private void exibirPopupNotificacao(String titulo, String mensagem) {
+        SwingUtilities.invokeLater(() -> {
+            // 1. Cria a Janela (JWindow)
+            JWindow popup = new JWindow(this);
+            popup.setAlwaysOnTop(true);
+
+            // 2. Configura o Painel da Janela
+            JPanel painel = new JPanel(new BorderLayout(5, 5));
+            painel.setBackground(new Color(240, 240, 240));
+            painel.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(Color.DARK_GRAY),
+                    BorderFactory.createEmptyBorder(10, 10, 10, 10)
+            ));
+
+            JLabel lblTitulo = new JLabel(titulo);
+            lblTitulo.setFont(lblTitulo.getFont().deriveFont(Font.BOLD, 14f));
+
+            JLabel lblMensagem = new JLabel(mensagem);
+
+            painel.add(lblTitulo, BorderLayout.NORTH);
+            painel.add(lblMensagem, BorderLayout.CENTER);
+            popup.add(painel);
+            popup.pack();
+
+            // 3. Define a Posição (Canto Inferior Direito)
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            Rectangle screenRect = ge.getMaximumWindowBounds();
+
+            int x = screenRect.width - popup.getWidth() - 10;
+            int y = screenRect.height - popup.getHeight() - 10;
+
+            popup.setLocation(x, y);
+
+            // 4. Torna a janela visível
+            popup.setVisible(true);
+
+            // 5. Configura um Timer para fechar a janela após 4 segundos
+            Timer timer = new Timer(4000, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    popup.dispose();
+                }
+            });
+            timer.setRepeats(false); // Garante que o timer rode apenas uma vez
+            timer.start();
+        });
+    }
+
     private class MensagemListener implements UDPServiceMensagemListener {
         @Override
         public void mensagemRecebida(String mensagem, Usuario remetente, boolean chatGeral) {
@@ -307,9 +360,7 @@ public class ChatClientSwing extends JFrame {
                             if (component instanceof PainelChatPVT) {
                                 PainelChatPVT p = (PainelChatPVT) component;
                                 if (p.getUsuario().equals(remetente)) { // Busca a janela do usuário remoto
-                                    JOptionPane.showMessageDialog(ChatClientSwing.this,
-                                            remetente.getNome() + " encerrou o chat.", "Chat Encerrado",
-                                            JOptionPane.INFORMATION_MESSAGE); // Notifica que o usuário remoto fechou o chat
+                                    exibirPopupNotificacao("Chat Encerrado", remetente.getNome() + " encerrou o chat.");
                                     tabbedPane.remove(i);
                                     chatsAbertos.remove(remetente); // e fecha a janela de chat no lado do usuário também
                                     break;
