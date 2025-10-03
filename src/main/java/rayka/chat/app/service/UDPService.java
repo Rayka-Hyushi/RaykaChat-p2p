@@ -16,6 +16,12 @@ public interface UDPService {
     void enviarMensagem(String mensagem, Usuario destinatario, boolean chatGeral) throws IOException;
 
     /**
+     * Envia uma mensagem de fim de chat para um destinatário
+     * @param destinatario
+     */
+    void enviarFimChat(Usuario destinatario) throws IOException;
+
+    /**
      * Notifica que o próprio usuário foi alterado
      *
      * @param usuario

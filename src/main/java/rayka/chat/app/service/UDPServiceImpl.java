@@ -84,14 +84,21 @@ public class UDPServiceImpl implements UDPService {
                 usuarioListener.usuarioAlterado(usuarioSonda);
             }
         } else if (mensagemRecebida.getTipo() == Mensagem.TipoMensagem.msg_individual ||
-                mensagemRecebida.getTipo() == Mensagem.TipoMensagem.msg_grupo) {
+                mensagemRecebida.getTipo() == Mensagem.TipoMensagem.msg_grupo) { // Se for do tipo grupo ou individual
             if (mensagemListener != null) {
-                Usuario remetente = new Usuario();
+                Usuario remetente = new Usuario(); // Monta o usuário remetente
                 remetente.setNome(mensagemRecebida.getUsuario());
                 remetente.setStatus(Usuario.StatusUsuario.valueOf(mensagemRecebida.getStatus()));
                 remetente.setEndereco(packet.getAddress());
                 boolean isChatGeral = mensagemRecebida.getTipo() == Mensagem.TipoMensagem.msg_grupo;
-                mensagemListener.mensagemRecebida(mensagemRecebida.getTexto(), remetente, isChatGeral);
+                mensagemListener.mensagemRecebida(mensagemRecebida.getTexto(), remetente, isChatGeral); // Mostra a mensagem recebida de acordo com seu tipo
+            }
+        } else if (mensagemRecebida.getTipo() == Mensagem.TipoMensagem.fim_chat) { // Se for do tipo fim_chat
+            if (mensagemListener != null) {
+                Usuario remetente = new Usuario(); // Monta o usuário remetente
+                remetente.setNome(mensagemRecebida.getUsuario());
+                remetente.setEndereco(packet.getAddress());
+                mensagemListener.chatFechado(remetente); // Chama o método para notificar o usuário que o chat foi fechado
             }
         }
     }
@@ -158,6 +165,27 @@ public class UDPServiceImpl implements UDPService {
                 );
                 socket.send(packet);
             }
+        }
+    }
+
+    @Override
+    public void enviarFimChat(Usuario destinatario) throws IOException { // Envia a mensagem de fim_chat
+        Mensagem msg = new Mensagem();
+        ObjectMapper mapper = new ObjectMapper();
+
+        msg.setUsuario(usuario.getNome());
+        msg.setTipo(Mensagem.TipoMensagem.fim_chat);
+
+        try (DatagramSocket socket = new DatagramSocket()) {
+            String strMensagem = mapper.writeValueAsString(msg);
+            byte[] bMensagem = strMensagem.getBytes();
+            DatagramPacket packet = new DatagramPacket(
+                    bMensagem,
+                    bMensagem.length,
+                    InetAddress.getByAddress(destinatario.getEndereco().getAddress()),
+                    8080
+            );
+            socket.send(packet);
         }
     }
 

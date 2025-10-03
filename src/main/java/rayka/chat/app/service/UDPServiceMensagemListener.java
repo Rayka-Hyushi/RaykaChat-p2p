@@ -12,4 +12,10 @@ public interface UDPServiceMensagemListener {
      * @param chatGeral
      */
     void mensagemRecebida(String mensagem, Usuario remetente, boolean chatGeral);
+
+    /**
+     * Notifica que o usuário remoto fechou o chat privado
+     * @param usuario
+     */
+    void chatFechado(Usuario usuario);
 }

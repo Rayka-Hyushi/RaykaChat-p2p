@@ -86,10 +86,12 @@ public class ChatClientSwing extends JFrame {
                     if (tab > 0 && tab < tabbedPane.getTabCount()) {
                         JMenuItem item = new JMenuItem("Fechar");
                         item.addActionListener(new ActionListener() {
+                            @SneakyThrows
                             @Override
                             public void actionPerformed(ActionEvent e) {
                                 PainelChatPVT painel = (PainelChatPVT) tabbedPane.getComponentAt(tab);
                                 if (painel != null) {
+                                    udpService.enviarFimChat(painel.getUsuario()); // Envia a mensagem fim_chat para o usuário antes de fechar a aba
                                     tabbedPane.remove(tab);
                                     chatsAbertos.remove(painel.getUsuario());
                                 }
@@ -109,7 +111,7 @@ public class ChatClientSwing extends JFrame {
         final int y = (screenSize.height - this.getHeight()) / 2;
         this.setLocation(x, y);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setTitle("Chat P2P - Redes de Computadores");
+        setTitle("Rayka Chat P2P - Redes de Computadores");
         String nomeUsuario = JOptionPane.showInputDialog(this, "Digite seu nome de usuario: ");
         this.meuUsuario = new Usuario(nomeUsuario, Usuario.StatusUsuario.DISPONIVEL, InetAddress.getLocalHost());
         udpService.usuarioAlterado(meuUsuario);
@@ -120,8 +122,6 @@ public class ChatClientSwing extends JFrame {
 
     private JComponent criaLista() {
         dfListModel = new DefaultListModel();
-        //dfListModel.addElement(new Usuario("Fulano", Usuario.StatusUsuario.NAO_PERTURBE, null));
-        //dfListModel.addElement(new Usuario("Cicrano", Usuario.StatusUsuario.DISPONIVEL, null));
         listaChat = new JList(dfListModel);
         listaChat.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
@@ -172,7 +172,7 @@ public class ChatClientSwing extends JFrame {
 
     private class UsuarioListener implements UDPServiceUsuarioListener {
         @Override
-        public void usuarioAdicionado(final Usuario usuario) {
+        public void usuarioAdicionado(final Usuario usuario) { // Adiciona usuários na lista de usuários online
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -184,7 +184,7 @@ public class ChatClientSwing extends JFrame {
         }
         
         @Override
-        public void usuarioRemovido(final Usuario usuario) {
+        public void usuarioRemovido(final Usuario usuario) { // Remove usuários da lista de usuários online e fecha a janela de chat se estiver aberta
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -209,7 +209,7 @@ public class ChatClientSwing extends JFrame {
         }
         
         @Override
-        public void usuarioAlterado(final Usuario usuario) {
+        public void usuarioAlterado(final Usuario usuario) { // Atualiza os objetos na lista de usuários online
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -258,6 +258,31 @@ public class ChatClientSwing extends JFrame {
                     }
                     if (painel != null) { // Se um painel válido for processado:
                         painel.getAreaChat().append(remetente.getNome() + "> " + mensagem + "\n"); // Anexa a mensagem
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void chatFechado(final Usuario remetente) { // Notifica o usuário quando o usuário remoto fecha o chat individual
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    if (chatsAbertos.contains(remetente)) { // Se o usuario remoto esta presente nas janelas de chat abertas
+                        for (int i = 1; i < tabbedPane.getTabCount(); i++) { // Percorre as janelas abertas
+                            Component component = tabbedPane.getComponentAt(i);
+                            if (component instanceof PainelChatPVT) {
+                                PainelChatPVT p = (PainelChatPVT) component;
+                                if (p.getUsuario().equals(remetente)) { // Busca a janela do usuário remoto
+                                    JOptionPane.showMessageDialog(ChatClientSwing.this,
+                                            remetente.getNome() + " encerrou o chat.", "Chat Encerrado",
+                                            JOptionPane.INFORMATION_MESSAGE); // Notifica que o usuário remoto fechou o chat
+                                    tabbedPane.remove(i);
+                                    chatsAbertos.remove(remetente); // e fecha a janela de chat no lado do usuário também
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
             });
