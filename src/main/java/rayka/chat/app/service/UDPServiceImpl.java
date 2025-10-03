@@ -66,10 +66,14 @@ public class UDPServiceImpl implements UDPService {
         }
     }
 
-    private void processarPacote(DatagramPacket packet) throws JsonProcessingException { // Processa pacotes recebidos
+    private void processarPacote(DatagramPacket packet) throws JsonProcessingException, UnknownHostException { // Processa pacotes recebidos
         String strMensagem = new String(packet.getData(), 0, packet.getLength()); // Serializa o pacote recebido
         ObjectMapper mapper = new ObjectMapper();
         Mensagem mensagemRecebida = mapper.readValue(strMensagem, Mensagem.class); // Cria o objeto da mensagem recebida
+
+        if (this.usuario != null && packet.getAddress().equals(this.usuario.getEndereco())) { // Ignora pacotes de broadcast do próprio IP
+            return;
+        }
 
         if (mensagemRecebida.getTipo() == Mensagem.TipoMensagem.sonda) { // Se a mensagem for do tipo sonda
             Usuario usuarioSonda = new Usuario(); // Monta o usuario remetente
@@ -114,9 +118,6 @@ public class UDPServiceImpl implements UDPService {
                     long ultimoTimestamp = entry.getValue();
 
                     long diferenca = System.currentTimeMillis() - ultimoTimestamp;
-                    if (enderecoInativo.equals(InetAddress.getLocalHost())) {
-                        continue;
-                    }
                     if (diferenca > 30000) {
                         Usuario remover = usuariosOnline.get(enderecoInativo);
                         if (remover != null && usuarioListener != null) {

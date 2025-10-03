@@ -14,6 +14,6 @@ public class Main {
             System.exit(0);
         }
         final UDPService udpService = new UDPServiceImpl(prefixoRede);
-        new ChatClientSwing(udpService);
+        new ChatClientSwing(udpService, prefixoRede);
     }
 }

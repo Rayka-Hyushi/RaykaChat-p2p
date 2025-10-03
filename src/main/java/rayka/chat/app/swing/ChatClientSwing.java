@@ -14,7 +14,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
 import java.net.UnknownHostException;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,7 +27,7 @@ import java.util.Set;
  * Time: 10:28
  */
 public class ChatClientSwing extends JFrame {
-    private Usuario meuUsuario;
+    private final Usuario meuUsuario;
     private JList listaChat;
     private DefaultListModel<Usuario> dfListModel;
     private JTabbedPane tabbedPane = new JTabbedPane();
@@ -32,7 +35,7 @@ public class ChatClientSwing extends JFrame {
     private UDPService udpService;
     private Usuario USER_GERAL = new Usuario("Geral", null, null);
 
-    public ChatClientSwing(UDPService service) throws UnknownHostException {
+    public ChatClientSwing(UDPService service, String prefixoRede) throws UnknownHostException {
         this.udpService = service;
         setLayout(new GridBagLayout());
         JMenuBar menuBar = new JMenuBar();
@@ -113,11 +116,41 @@ public class ChatClientSwing extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("Rayka Chat P2P - Redes de Computadores");
         String nomeUsuario = JOptionPane.showInputDialog(this, "Digite seu nome de usuario: ");
-        this.meuUsuario = new Usuario(nomeUsuario, Usuario.StatusUsuario.DISPONIVEL, InetAddress.getLocalHost());
+
+        InetAddress ipLocal = encontrarIPLocal(prefixoRede); // Chama o método para encontrar o ip correto entre as interfaces de rede do usuário
+        if (ipLocal == null) {
+            JOptionPane.showMessageDialog(
+                    this, "Não foi possível encontrar um IP válido na sub-rede " + prefixoRede,
+                    "Erro de Rede", JOptionPane.ERROR_MESSAGE);
+            System.exit(1); // Se o IP não for encontrado, finaliza com status 1
+        }
+
+        this.meuUsuario = new Usuario(nomeUsuario, Usuario.StatusUsuario.DISPONIVEL, ipLocal);
         udpService.usuarioAlterado(meuUsuario);
         udpService.addListenerMensagem(new MensagemListener());
         udpService.addListenerUsuario(new UsuarioListener());
         setVisible(true);
+    }
+
+    private InetAddress encontrarIPLocal(String prefixoRede) { // Busca entre as interfaces de rede, a que possui o ip inserido pelo usuário
+        try {
+            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+            while (networkInterfaces.hasMoreElements()) {
+                NetworkInterface ni = networkInterfaces.nextElement();
+                if (!ni.isLoopback() && ni.isUp()) {
+                    for (InterfaceAddress ia : ni.getInterfaceAddresses()) {
+                        InetAddress addr = ia.getAddress();
+                        // Verifica se o endereço não é nulo e se começa com o prefixo da rede
+                        if (addr instanceof java.net.Inet4Address && addr.getHostAddress().startsWith(prefixoRede)) {
+                            return addr;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null; // Retorna null se não encontrar
     }
 
     private JComponent criaLista() {
