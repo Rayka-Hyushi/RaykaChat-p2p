@@ -66,6 +66,18 @@ public class UDPServiceImpl implements UDPService {
         }
     }
 
+    private Usuario.StatusUsuario getStatusOrDefault(String statusString) {
+        if (statusString == null || statusString.isEmpty()) {
+            return Usuario.StatusUsuario.DISPONIVEL;
+        }
+        try {
+            return Usuario.StatusUsuario.valueOf(statusString.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            System.err.println("Status desconhecido recebido: " + statusString);
+            return Usuario.StatusUsuario.DISPONIVEL;
+        }
+    }
+
     private void processarPacote(DatagramPacket packet) throws JsonProcessingException, UnknownHostException { // Processa pacotes recebidos
         String strMensagem = new String(packet.getData(), 0, packet.getLength()); // Serializa o pacote recebido
         ObjectMapper mapper = new ObjectMapper();
@@ -78,7 +90,7 @@ public class UDPServiceImpl implements UDPService {
         if (mensagemRecebida.getTipoMensagem() == Mensagem.TipoMensagem.sonda) { // Se a mensagem for do tipo sonda
             Usuario usuarioSonda = new Usuario(); // Monta o usuario remetente
             usuarioSonda.setNome(mensagemRecebida.getUsuario());
-            usuarioSonda.setStatus(Usuario.StatusUsuario.valueOf(mensagemRecebida.getStatus()));
+            usuarioSonda.setStatus(getStatusOrDefault(mensagemRecebida.getStatus()));
             usuarioSonda.setEndereco(packet.getAddress());
 
             ultimasSondas.put(usuarioSonda.getEndereco(), System.currentTimeMillis()); // Mapeia o timestamp para saber o tempo da ultima sonda
@@ -92,7 +104,7 @@ public class UDPServiceImpl implements UDPService {
             if (mensagemListener != null) {
                 Usuario remetente = new Usuario(); // Monta o usuário remetente
                 remetente.setNome(mensagemRecebida.getUsuario());
-                remetente.setStatus(Usuario.StatusUsuario.valueOf(mensagemRecebida.getStatus()));
+                remetente.setStatus(getStatusOrDefault(mensagemRecebida.getStatus()));
                 remetente.setEndereco(packet.getAddress());
                 boolean isChatGeral = mensagemRecebida.getTipoMensagem() == Mensagem.TipoMensagem.msg_grupo;
                 mensagemListener.mensagemRecebida(mensagemRecebida.getMsg(), remetente, isChatGeral); // Mostra a mensagem recebida de acordo com seu tipo
