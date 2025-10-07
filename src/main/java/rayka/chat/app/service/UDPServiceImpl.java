@@ -31,7 +31,7 @@ public class UDPServiceImpl implements UDPService {
                     continue;
                 }
                 Mensagem mensagem = new Mensagem(); // Cria uma mensagem
-                mensagem.setTipo(Mensagem.TipoMensagem.sonda); // Do tipo sonda
+                mensagem.setTipoMensagem(Mensagem.TipoMensagem.sonda); // Do tipo sonda
                 mensagem.setUsuario(usuario.getNome()); // Com o nome de usuario
                 mensagem.setStatus(usuario.getStatus().toString()); // E status atual
                 ObjectMapper mapper = new ObjectMapper();
@@ -75,7 +75,7 @@ public class UDPServiceImpl implements UDPService {
             return;
         }
 
-        if (mensagemRecebida.getTipo() == Mensagem.TipoMensagem.sonda) { // Se a mensagem for do tipo sonda
+        if (mensagemRecebida.getTipoMensagem() == Mensagem.TipoMensagem.sonda) { // Se a mensagem for do tipo sonda
             Usuario usuarioSonda = new Usuario(); // Monta o usuario remetente
             usuarioSonda.setNome(mensagemRecebida.getUsuario());
             usuarioSonda.setStatus(Usuario.StatusUsuario.valueOf(mensagemRecebida.getStatus()));
@@ -87,17 +87,17 @@ public class UDPServiceImpl implements UDPService {
             if (usuarioListener != null) {
                 usuarioListener.usuarioAlterado(usuarioSonda);
             }
-        } else if (mensagemRecebida.getTipo() == Mensagem.TipoMensagem.msg_individual ||
-                mensagemRecebida.getTipo() == Mensagem.TipoMensagem.msg_grupo) { // Se for do tipo grupo ou individual
+        } else if (mensagemRecebida.getTipoMensagem() == Mensagem.TipoMensagem.msg_individual ||
+                mensagemRecebida.getTipoMensagem() == Mensagem.TipoMensagem.msg_grupo) { // Se for do tipo grupo ou individual
             if (mensagemListener != null) {
                 Usuario remetente = new Usuario(); // Monta o usuário remetente
                 remetente.setNome(mensagemRecebida.getUsuario());
                 remetente.setStatus(Usuario.StatusUsuario.valueOf(mensagemRecebida.getStatus()));
                 remetente.setEndereco(packet.getAddress());
-                boolean isChatGeral = mensagemRecebida.getTipo() == Mensagem.TipoMensagem.msg_grupo;
-                mensagemListener.mensagemRecebida(mensagemRecebida.getTexto(), remetente, isChatGeral); // Mostra a mensagem recebida de acordo com seu tipo
+                boolean isChatGeral = mensagemRecebida.getTipoMensagem() == Mensagem.TipoMensagem.msg_grupo;
+                mensagemListener.mensagemRecebida(mensagemRecebida.getMsg(), remetente, isChatGeral); // Mostra a mensagem recebida de acordo com seu tipo
             }
-        } else if (mensagemRecebida.getTipo() == Mensagem.TipoMensagem.fim_chat) { // Se for do tipo fim_chat
+        } else if (mensagemRecebida.getTipoMensagem() == Mensagem.TipoMensagem.fim_chat) { // Se for do tipo fim_chat
             if (mensagemListener != null) {
                 Usuario remetente = new Usuario(); // Monta o usuário remetente
                 remetente.setNome(mensagemRecebida.getUsuario());
@@ -137,12 +137,12 @@ public class UDPServiceImpl implements UDPService {
         ObjectMapper mapper = new ObjectMapper();
 
         msg.setUsuario(usuario.getNome());
-        msg.setTexto(mensagem);
+        msg.setMsg(mensagem);
         msg.setStatus(usuario.getStatus().toString());
 
         try (DatagramSocket socket = new DatagramSocket()) {
             if (chatGeral) {
-                msg.setTipo(Mensagem.TipoMensagem.msg_grupo);
+                msg.setTipoMensagem(Mensagem.TipoMensagem.msg_grupo);
                 String strMensagem = mapper.writeValueAsString(msg);
                 byte[] bMensagem = strMensagem.getBytes();
                 for (int i = 1; i < 255; i++) {
@@ -155,7 +155,7 @@ public class UDPServiceImpl implements UDPService {
                     socket.send(packet);
                 }
             } else {
-                msg.setTipo(Mensagem.TipoMensagem.msg_individual);
+                msg.setTipoMensagem(Mensagem.TipoMensagem.msg_individual);
                 String strMensagem = mapper.writeValueAsString(msg);
                 byte[] bMensagem = strMensagem.getBytes();
                 DatagramPacket packet = new DatagramPacket(
@@ -175,7 +175,7 @@ public class UDPServiceImpl implements UDPService {
         ObjectMapper mapper = new ObjectMapper();
 
         msg.setUsuario(usuario.getNome());
-        msg.setTipo(Mensagem.TipoMensagem.fim_chat);
+        msg.setTipoMensagem(Mensagem.TipoMensagem.fim_chat);
 
         try (DatagramSocket socket = new DatagramSocket()) {
             String strMensagem = mapper.writeValueAsString(msg);
